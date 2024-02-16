@@ -3,7 +3,13 @@ import Credentials from 'next-auth/providers/credentials';
 import { authConfig } from './auth.config';
 import { z } from 'zod';
 import { sql } from '@vercel/postgres';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
+
+type User = {
+  user_id: number;
+  email: string;
+  password: string;
+};
 
 async function getUser(email: string): Promise<User | undefined> {
   try {
@@ -29,7 +35,11 @@ export const { auth, signIn, signOut } = NextAuth({
           const user = await getUser(email);
 
           if (!user) return null;
-          const passwordsMatch = await bcrypt.compare(password, user.password);
+
+          // TODO need add hash to password user in db
+          const hashPassword = await bcrypt.hash(user.password, 7);
+
+          const passwordsMatch = await bcrypt.compare(password, hashPassword);
 
           if (passwordsMatch) return user;
         }
